@@ -42,7 +42,7 @@ def get_current_ip():
 def runscript():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)     
-        context = browser.new_context(proxy={"server": PROXY} if PROXY else None)
+        context = browser.new_context()
         page = context.new_page()
 
     try:
