@@ -14,6 +14,7 @@ from flask import Flask, request, jsonify
 import time
 from flask_cors import CORS
 import requests
+import undetected_chromedriver as uc
 
 # Load environment variables
 load_dotenv()
@@ -45,12 +46,13 @@ def get_current_ip():
 
 # Script to scrape trends from Twitter
 def runscript():
-    # Set up Chrome WebDriver
-    options = webdriver.ChromeOptions()
+    # Set up Undetected Chrome WebDriver
+    options = uc.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
-    options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"  
-    driver = webdriver.Chrome(service=Service(), options=options)
+    options.add_argument('--disable-blink-features=AutomationControlled')  # Helps avoid detection
+
+    driver = uc.Chrome(options=options, headless=True)  # You can set headless=True if needed
 
     try:
         # Open Twitter login page
@@ -59,78 +61,64 @@ def runscript():
 
         # Wait for the username input field
         WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
-
-        # Input login credentials
         username_field = driver.find_element(By.NAME, 'text')
         username_field.send_keys(TWITTER_USERNAME)
 
         next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
         next_button.click()
 
-       # Input login Uname
-        username_present = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
-        if username_present:
-            username = driver.find_element(By.NAME, 'text')
-            username.send_keys(TWITTER_UNAME)
-
+        # Wait for and enter uname (if asked)
+        try:
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, 'text')))
+            uname_field = driver.find_element(By.NAME, 'text')
+            uname_field.send_keys(TWITTER_UNAME)
             next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
             next_button.click()
+        except:
+            print("No secondary username prompt.")
 
-        else:
-            print("Username field not found. Skipping to password entry.")
-
-        # Wait for the password input field
+        # Enter password
         WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'password')))
         password_field = driver.find_element(By.NAME, 'password')
         password_field.send_keys(TWITTER_PASSWORD, Keys.RETURN)
 
         print("Waiting for the home page to load...")
-        driver.get("https://twitter.com/explore/tabs/trending")  
-
+        WebDriverWait(driver, 60).until(EC.url_contains("/home"))
+        driver.get("https://twitter.com/explore/tabs/trending")
         time.sleep(5)
 
-        # Use BeautifulSoup to parse the HTML
+        # BeautifulSoup parsing (same as your current logic)
         soup = BeautifulSoup(driver.page_source, "html.parser")
-
         trending_topics_text = []
 
-        try:
-            # Find all sections with the class "css-175oi2r"
-            trending_sections = soup.find_all("div", class_="css-175oi2r")
-            if not trending_sections:
-                print("No trending topics found.")
-            else:
-                # Iterate through each section to find "span" elements with the class "r-18u37iz"
-                for section in trending_sections:
-                    spans = section.find_all("span", class_="r-18u37iz")
-                    trending_topics_text.extend([span.get_text() for span in spans])
-                topics = []
+        trending_sections = soup.find_all("div", class_="css-175oi2r")
+        for section in trending_sections:
+            spans = section.find_all("span", class_="r-18u37iz")
+            trending_topics_text.extend([span.get_text() for span in spans])
 
-                # Print the top 5 trending topics
-                current_ip = get_current_ip()
-                if trending_topics_text:
-                    print("Top 5 Trending Topics:")
-                    for idx, topic in enumerate(trending_topics_text[:5], start=1):
-                        topics.append(topic)
-                        print(f"{idx}. {topic}")
-                    data = {
-                        "_id": str(uuid4()),  
-                        "Trend1": topics[0] ,
-                        "Trend2": topics[1] ,
-                        "Trend3": topics[2] ,
-                        "Trend4": topics[3] ,
-                        "Trend5": topics[4],
-                        "IP": current_ip,
-                        "Date": datetime.now().isoformat()
-                    }
-                    result = trends_collection.insert_one(data)
-                    print(f"Data inserted with ID: {result.inserted_id}")
-                    return topics
-                else:
-                    print("No text found for trending topics.")
+        topics = []
+        current_ip = get_current_ip()
 
-        except Exception as e:
-            print(f"Error while extracting trending topics: {e}")
+        if trending_topics_text:
+            print("Top 5 Trending Topics:")
+            for idx, topic in enumerate(trending_topics_text[:5], start=1):
+                topics.append(topic)
+                print(f"{idx}. {topic}")
+            data = {
+                "_id": str(uuid4()),
+                "Trend1": topics[0],
+                "Trend2": topics[1],
+                "Trend3": topics[2],
+                "Trend4": topics[3],
+                "Trend5": topics[4],
+                "IP": current_ip,
+                "Date": datetime.now().isoformat()
+            }
+            result = trends_collection.insert_one(data)
+            print(f"Data inserted with ID: {result.inserted_id}")
+            return topics
+        else:
+            print("No text found for trending topics.")
 
     except Exception as e:
         print(f"Error during script execution: {e}")
