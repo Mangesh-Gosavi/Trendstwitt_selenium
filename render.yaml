@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: trendstweet-backend
-    env: python
-    rootDir: trendstweet-backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn script:app
-    preDeployCommand: playwright install
