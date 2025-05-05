@@ -43,7 +43,7 @@ def runscript():
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True, 
-            executable_path='C:\Program Files\Google\Chrome\Application\chrome'  
+            executable_path='C:\Program Files\Google\Chrome\Application\chrome.exe'  
         )
         context = browser.new_context(proxy={"server": PROXY} if PROXY else None)
         page = context.new_page()
