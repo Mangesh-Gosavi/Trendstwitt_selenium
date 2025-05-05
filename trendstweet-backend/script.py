@@ -3,10 +3,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 import os
 from uuid import uuid4
 from datetime import datetime
@@ -46,26 +45,12 @@ def get_current_ip():
 
 # Script to scrape trends from Twitter
 def runscript():
-    # Set up Edge WebDriver
-    options = EdgeOptions()
-
-    # Set the location for Microsoft Edge WebDriver on your machine
-    options.use_chromium = True  # Since Edge is Chromium-based
-    options.add_argument("--headless")  # Use headless mode if needed
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")  # Disable GPU for headless mode
-
-    # Optional: Use proxy if provided
+    # Set up Chrome WebDriver
+    options = webdriver.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
-
-    # Specify the path to your Edge WebDriver (adjust this path if needed)
-    driver_path = r"C:\path\to\msedgedriver.exe"  # Replace with your actual path to msedgedriver.exe
-
-    # Initialize the Edge WebDriver
-    driver = webdriver.Edge(service=EdgeService(driver_path), options=options)
-
+    driver = webdriver.Chrome(service=Service(), options=options)
+    
     try:
         # Open Twitter login page
         driver.get('https://x.com/i/flow/login')
@@ -81,14 +66,15 @@ def runscript():
         next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
         next_button.click()
 
-        # Input login Uname (if the username field is present)
+       # Input login Uname
         username_present = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
-
         if username_present:
             username = driver.find_element(By.NAME, 'text')
             username.send_keys(TWITTER_UNAME)
+
             next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
             next_button.click()
+
         else:
             print("Username field not found. Skipping to password entry.")
 
@@ -98,12 +84,13 @@ def runscript():
         password_field.send_keys(TWITTER_PASSWORD, Keys.RETURN)
 
         print("Waiting for the home page to load...")
-        driver.get("https://twitter.com/explore/tabs/trending")
+        driver.get("https://twitter.com/explore/tabs/trending")  
 
         time.sleep(5)
 
         # Use BeautifulSoup to parse the HTML
         soup = BeautifulSoup(driver.page_source, "html.parser")
+
         trending_topics_text = []
 
         try:
@@ -116,7 +103,6 @@ def runscript():
                 for section in trending_sections:
                     spans = section.find_all("span", class_="r-18u37iz")
                     trending_topics_text.extend([span.get_text() for span in spans])
-
                 topics = []
 
                 # Print the top 5 trending topics
@@ -127,11 +113,11 @@ def runscript():
                         topics.append(topic)
                         print(f"{idx}. {topic}")
                     data = {
-                        "_id": str(uuid4()),  # Use uuid for unique ID
-                        "Trend1": topics[0],
-                        "Trend2": topics[1],
-                        "Trend3": topics[2],
-                        "Trend4": topics[3],
+                        "_id": str(uuid4()),  
+                        "Trend1": topics[0] ,
+                        "Trend2": topics[1] ,
+                        "Trend3": topics[2] ,
+                        "Trend4": topics[3] ,
                         "Trend5": topics[4],
                         "IP": current_ip,
                         "Date": datetime.now().isoformat()
@@ -149,6 +135,9 @@ def runscript():
         print(f"Error during script execution: {e}")
 
     finally:
+        os.environ["TWITTER_USERNAME"] = ""
+        os.environ["TWITTER_UNAME"] = ""
+        os.environ["TWITTER_PASSWORD"] = ""
         driver.quit()
 
 # Route to execute the script
