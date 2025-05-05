@@ -45,10 +45,19 @@ def get_current_ip():
 
 # Script to scrape trends from Twitter
 def runscript():
-    # Set up Chrome WebDriver
+    # Set up Chrome WebDriver with headless configuration for live environment
     options = webdriver.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
+    
+    # Path to Chrome binary in Render or cloud service
+    options.binary_location = "/usr/bin/google-chrome-stable"  # Render uses this location for Chrome binary
+
+    # Headless mode for Render or similar services
+    options.add_argument("--headless")  # Run in headless mode (without GUI)
+    options.add_argument("--no-sandbox")  # Fixes certain Chrome-related issues
+    options.add_argument("--disable-dev-shm-usage")  # Overcomes memory issues on cloud services
+    
     driver = webdriver.Chrome(service=Service(), options=options)
 
     try:
@@ -68,6 +77,7 @@ def runscript():
 
         # Input login Uname (if the username field is present)
         username_present = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
+
         if username_present:
             username = driver.find_element(By.NAME, 'text')
             username.send_keys(TWITTER_UNAME)
@@ -175,4 +185,3 @@ def fetchtopic():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
