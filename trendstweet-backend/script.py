@@ -54,6 +54,7 @@ def runscript():
     
     # Set headless mode correctly
     options.add_argument('--headless')  
+    options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     driver = uc.Chrome(options=options)  
 
     try:
