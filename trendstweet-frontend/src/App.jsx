@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import API_BASE_URL from './config';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
@@ -29,7 +30,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('http://127.0.0.1:5000/fetchtopic');
+      const response = await fetch(`${API_BASE_URL}/fetchtopic`);
       const data = await response.json();
 
       if (response.ok) {
@@ -48,7 +49,7 @@ function App() {
     const { username, uname, password } = formData;
     setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:5000/runscript?username=${encodeURIComponent(username)}&uname=${encodeURIComponent(uname)}&password=${encodeURIComponent(password)}`);
+      const response = await fetch(`${API_BASE_URL}/runscript?username=${encodeURIComponent(username)}&uname=${encodeURIComponent(uname)}&password=${encodeURIComponent(password)}`);
       const result = await response.json();
 
       if (response.ok) {
