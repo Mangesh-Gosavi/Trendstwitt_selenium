@@ -49,6 +49,7 @@ def runscript():
     options = webdriver.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
+    options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
     driver = webdriver.Chrome(service=Service(), options=options)
     
     try:
