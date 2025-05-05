@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from "./config"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
