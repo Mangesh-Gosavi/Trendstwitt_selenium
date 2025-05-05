@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 import os
 from uuid import uuid4
 from datetime import datetime
@@ -15,21 +15,26 @@ import time
 from flask_cors import CORS
 import requests
 
+# Load environment variables
 load_dotenv()
 
+# Get environment variables
 PROXY = os.getenv('PROXY_URL')
 TWITTER_USERNAME = os.getenv('TWITTER_USERNAME')
 TWITTER_PASSWORD = os.getenv('TWITTER_PASSWORD')
 TWITTER_UNAME = os.getenv('TWITTER_UNAME')
 
+# Flask app setup
 app = Flask(__name__)
 CORS(app)
 
+# MongoDB setup
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
-db = client["Trendingtweets"]  
-trends_collection = db["trends"] 
+db = client["Trendingtweets"]
+trends_collection = db["trends"]
 
+# Function to get current IP address
 def get_current_ip():
     try:
         response = requests.get("https://httpbin.org/ip")
@@ -37,14 +42,15 @@ def get_current_ip():
     except requests.RequestException as e:
         print(f"Error fetching IP: {e}")
         return "Could not fetch IP"
-    
+
+# Script to scrape trends from Twitter
 def runscript():
     # Set up Chrome WebDriver
     options = webdriver.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
     driver = webdriver.Chrome(service=Service(), options=options)
-    
+
     try:
         # Open Twitter login page
         driver.get('https://x.com/i/flow/login')
@@ -60,15 +66,13 @@ def runscript():
         next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
         next_button.click()
 
-       # Input login Uname
+        # Input login Uname (if the username field is present)
         username_present = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
         if username_present:
             username = driver.find_element(By.NAME, 'text')
             username.send_keys(TWITTER_UNAME)
-
             next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
             next_button.click()
-
         else:
             print("Username field not found. Skipping to password entry.")
 
@@ -78,13 +82,12 @@ def runscript():
         password_field.send_keys(TWITTER_PASSWORD, Keys.RETURN)
 
         print("Waiting for the home page to load...")
-        driver.get("https://twitter.com/explore/tabs/trending")  
+        driver.get("https://twitter.com/explore/tabs/trending")
 
         time.sleep(5)
 
         # Use BeautifulSoup to parse the HTML
         soup = BeautifulSoup(driver.page_source, "html.parser")
-
         trending_topics_text = []
 
         try:
@@ -97,6 +100,7 @@ def runscript():
                 for section in trending_sections:
                     spans = section.find_all("span", class_="r-18u37iz")
                     trending_topics_text.extend([span.get_text() for span in spans])
+
                 topics = []
 
                 # Print the top 5 trending topics
@@ -107,11 +111,11 @@ def runscript():
                         topics.append(topic)
                         print(f"{idx}. {topic}")
                     data = {
-                        "_id": str(uuid4()),  
-                        "Trend1": topics[0] ,
-                        "Trend2": topics[1] ,
-                        "Trend3": topics[2] ,
-                        "Trend4": topics[3] ,
+                        "_id": str(uuid4()),  # Use uuid for unique ID
+                        "Trend1": topics[0],
+                        "Trend2": topics[1],
+                        "Trend3": topics[2],
+                        "Trend4": topics[3],
                         "Trend5": topics[4],
                         "IP": current_ip,
                         "Date": datetime.now().isoformat()
@@ -129,37 +133,37 @@ def runscript():
         print(f"Error during script execution: {e}")
 
     finally:
-        set_key(".env", "TWITTER_USERNAME", "")
-        set_key(".env", "TWITTER_UNAME", "")
-        set_key(".env", "TWITTER_PASSWORD", "")
         driver.quit()
-        
 
+# Route to execute the script
 @app.route('/runscript', methods=['GET'])
 def run_script():
     try:
+        # Get credentials from query parameters
         username = request.args.get('username')
         uname = request.args.get('uname')
         password = request.args.get('password')
 
-        set_key(".env", "TWITTER_USERNAME", username)
-        set_key(".env", "TWITTER_UNAME", uname)
-        set_key(".env", "TWITTER_PASSWORD", password)
+        # Update environment variables for runtime (not storing in .env file)
+        os.environ["TWITTER_USERNAME"] = username
+        os.environ["TWITTER_UNAME"] = uname
+        os.environ["TWITTER_PASSWORD"] = password
 
-        load_dotenv()
         result = runscript()
         return jsonify({"data": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+# Route to fetch trending topics from MongoDB
 @app.route('/fetchtopic', methods=['GET'])
 def fetchtopic():
     try:
-        results = trends_collection.find()
+        # Fetch trends sorted by date
+        results = trends_collection.find().sort("Date", -1)
 
         topics = []
         for result in results:
-            result.pop('_id', None)
+            result.pop('_id', None)  # Remove _id from results
             topics.append(result)
 
         return jsonify({"data": topics}), 200
@@ -167,8 +171,7 @@ def fetchtopic():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+# Start Flask app
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
     print("Server Listening....")
- 
