@@ -50,9 +50,11 @@ def runscript():
     options = uc.ChromeOptions()
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
-    options.add_argument('--disable-blink-features=AutomationControlled')  # Helps avoid detection
-
-    driver = uc.Chrome(options=options, headless=True)  # You can set headless=True if needed
+    options.add_argument('--disable-blink-features=AutomationControlled')  
+    
+    # Set headless mode correctly
+    options.add_argument('--headless')  
+    driver = uc.Chrome(options=options)  
 
     try:
         # Open Twitter login page
