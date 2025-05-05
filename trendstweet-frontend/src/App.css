@@ -1,0 +1,153 @@
+/* Global Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+.title {
+  text-align: center;
+  font-size: clamp(1.5rem, 4vw, 2.5rem); /* min 1.5rem, max 2.5rem, scales with viewport */
+  color: #4CAF50;
+  margin-bottom: 30px;
+}
+
+
+form {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+form label {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 15px;
+  display: block;
+  font-weight: 600;
+}
+
+form input {
+  padding: 12px;
+  margin: 10px 0 20px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+form input:focus {
+  border-color: #4CAF50;
+  outline: none;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 100%;
+  max-width: 220px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+button:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(1);
+}
+
+#error-message {
+  color: red;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-top: 20px;
+}
+
+#trends {
+  margin: 30px auto;
+  max-width: 600px;
+  padding: 25px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+#trends h3 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #4CAF50;
+}
+
+#trends ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+#trends li {
+  font-size: 1.1rem;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#trends li:last-child {
+  border-bottom: none;
+}
+
+
+h3 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.trend-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.trend-card {
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: left;
+  transition: transform 0.3s ease;
+}
+
+.trend-card:hover {
+  transform: translateY(-5px);
+}
+
+.trend-card ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trend-card li {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  border: none;
+}
+
