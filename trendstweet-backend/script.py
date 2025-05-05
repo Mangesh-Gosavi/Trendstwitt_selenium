@@ -26,7 +26,7 @@ TWITTER_UNAME = os.getenv('TWITTER_UNAME')
 
 # Flask app setup
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://trendstwitt-selenium-wbaj.vercel.app/"}})
 
 # MongoDB setup
 MONGO_URI = os.getenv("MONGO_URI")
