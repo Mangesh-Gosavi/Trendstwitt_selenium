@@ -41,7 +41,10 @@ def get_current_ip():
 # Script to scrape trends from Twitter
 def runscript():
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True, 
+            executable_path='C:\Program Files\Google\Chrome\Application\chrome'  
+        )
         context = browser.new_context(proxy={"server": PROXY} if PROXY else None)
         page = context.new_page()
 
