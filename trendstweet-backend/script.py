@@ -1,9 +1,4 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv, set_key
 import os
@@ -14,7 +9,6 @@ from flask import Flask, request, jsonify
 import time
 from flask_cors import CORS
 import requests
-import undetected_chromedriver as uc
 
 # Load environment variables
 load_dotenv()
@@ -46,52 +40,47 @@ def get_current_ip():
 
 # Script to scrape trends from Twitter
 def runscript():
-    # Set up Undetected Chrome WebDriver
-    options = uc.ChromeOptions()
-    if PROXY:
-        options.add_argument(f'--proxy-server={PROXY}')
-    options.add_argument('--disable-blink-features=AutomationControlled')  
-    
-    # Set headless mode correctly
-    options.add_argument('--headless')  
-    options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    driver = uc.Chrome(options=options)  
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(proxy={"server": PROXY} if PROXY else None)
+        page = context.new_page()
 
     try:
         # Open Twitter login page
-        driver.get('https://x.com/i/flow/login')
+        page.goto('https://x.com/i/flow/login')
         print("Waiting for login form to load...")
 
         # Wait for the username input field
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'text')))
-        username_field = driver.find_element(By.NAME, 'text')
-        username_field.send_keys(TWITTER_USERNAME)
+        page.wait_for_selector('input[name="text"]', timeout=60000)
+        username_field = page.locator('input[name="text"]')
+        username_field.fill(TWITTER_USERNAME)
 
-        next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
+        next_button = page.locator('button[role="button"] span:text("Next")')
         next_button.click()
 
         # Wait for and enter uname (if asked)
         try:
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, 'text')))
-            uname_field = driver.find_element(By.NAME, 'text')
-            uname_field.send_keys(TWITTER_UNAME)
-            next_button = driver.find_element(By.XPATH, '//button[@role="button" and .//span[text()="Next"]]')
+            page.wait_for_selector('input[name="text"]', timeout=5000)
+            uname_field = page.locator('input[name="text"]')
+            uname_field.fill(TWITTER_UNAME)
             next_button.click()
         except:
             print("No secondary username prompt.")
 
         # Enter password
-        WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'password')))
-        password_field = driver.find_element(By.NAME, 'password')
-        password_field.send_keys(TWITTER_PASSWORD, Keys.RETURN)
+        page.wait_for_selector('input[name="password"]', timeout=60000)
+        password_field = page.locator('input[name="password"]')
+        password_field.fill(TWITTER_PASSWORD)
+        password_field.press("Enter")
 
         print("Waiting for the home page to load...")
-        WebDriverWait(driver, 60).until(EC.url_contains("/home"))
-        driver.get("https://twitter.com/explore/tabs/trending")
+        page.wait_for_url('**/home', timeout=60000)
+
+        page.goto("https://twitter.com/explore/tabs/trending")
         time.sleep(5)
 
         # BeautifulSoup parsing (same as your current logic)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
+        soup = BeautifulSoup(page.content(), "html.parser")
         trending_topics_text = []
 
         trending_sections = soup.find_all("div", class_="css-175oi2r")
@@ -127,10 +116,7 @@ def runscript():
         print(f"Error during script execution: {e}")
 
     finally:
-        os.environ["TWITTER_USERNAME"] = ""
-        os.environ["TWITTER_UNAME"] = ""
-        os.environ["TWITTER_PASSWORD"] = ""
-        driver.quit()
+        browser.close()
 
 # Route to execute the script
 @app.route('/runscript', methods=['GET'])
