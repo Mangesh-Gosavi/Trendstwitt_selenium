@@ -1,2 +1,0 @@
-release: playwright install
-web: gunicorn script:app
