@@ -3,7 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
@@ -45,20 +46,25 @@ def get_current_ip():
 
 # Script to scrape trends from Twitter
 def runscript():
-    # Set up Chrome WebDriver with headless configuration for live environment
-    options = webdriver.ChromeOptions()
+    # Set up Edge WebDriver
+    options = EdgeOptions()
+
+    # Set the location for Microsoft Edge WebDriver on your machine
+    options.use_chromium = True  # Since Edge is Chromium-based
+    options.add_argument("--headless")  # Use headless mode if needed
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")  # Disable GPU for headless mode
+
+    # Optional: Use proxy if provided
     if PROXY:
         options.add_argument(f'--proxy-server={PROXY}')
-    
-    # Path to Chrome binary in Render or cloud service
-    options.binary_location = "/usr/bin/google-chrome-stable"  # Render uses this location for Chrome binary
 
-    # Headless mode for Render or similar services
-    options.add_argument("--headless")  # Run in headless mode (without GUI)
-    options.add_argument("--no-sandbox")  # Fixes certain Chrome-related issues
-    options.add_argument("--disable-dev-shm-usage")  # Overcomes memory issues on cloud services
-    
-    driver = webdriver.Chrome(service=Service(), options=options)
+    # Specify the path to your Edge WebDriver (adjust this path if needed)
+    driver_path = r"C:\path\to\msedgedriver.exe"  # Replace with your actual path to msedgedriver.exe
+
+    # Initialize the Edge WebDriver
+    driver = webdriver.Edge(service=EdgeService(driver_path), options=options)
 
     try:
         # Open Twitter login page
